@@ -13,5 +13,7 @@ Notification to authors: March 31, 2022
 # Todo
 
 [ ] Implement Baseline
+
 [ ] Discuss data analysis
+
 [ ] List-down main models  
