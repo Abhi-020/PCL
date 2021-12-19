@@ -21,6 +21,7 @@ Notification to authors: March 31, 2022
 |SGD Classifier||
 |XGBoost ||
 |SVM ||
+|MLP||
 |Vanilla RNN ||
 |Bi-LSTM ||
 
