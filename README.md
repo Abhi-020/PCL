@@ -12,8 +12,18 @@ Notification to authors: March 31, 2022
 
 # Todo
 
-[ ] Implement Baseline
+- [ ] Implement Baseline
 
-[ ] Discuss data analysis
+|MODELS|F1|
+|---|---|
+|Logistic Regression ||
+|Naive Bayes||
+|SGD Classifier||
+|XGBoost ||
+|SVM ||
+|Vanilla RNN ||
+|Bi-LSTM ||
 
-[ ] List-down main models  
+- [ ] Discuss data analysis
+
+- [ ] List-down main models  
