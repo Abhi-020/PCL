@@ -4,11 +4,13 @@ This is the implementation repostiory for the completition [PCL](https://competi
 
 Timeline:
 
+```
 Evaluation Start: January 10, 2022
 Evaluation End: January 31, 2022
 Paper submissions due: February 23, 2022
 Notification to authors: March 31, 2022
 
+```
 
 # Todo
 
@@ -25,6 +27,12 @@ Notification to authors: March 31, 2022
 |Vanilla RNN ||
 |Bi-LSTM ||
 
+- [ ] Features: countvectorizer, tfidfvectorizer, word2vec (local), gloVe, elmo, BERT
+
 - [ ] Discuss data analysis
 
 - [ ] List-down main models  
+
+|MODELS|F1|
+|---|---|
+|BERT ||
