@@ -76,7 +76,7 @@ for i in cf:
 
 # TF- IDF
 # 
-
+#cv = CountVectorizer( max_features = 50)
 cv = TfidfVectorizer(min_df=1,stop_words='english')
 X = cv.fit_transform(corpus).toarray()
 y = df.iloc[:,-1].values
@@ -90,8 +90,9 @@ y_test_task1 = [ 0 if (y == 1 or y == 0) else 1 for y in y_test ]
 
 # In[89]:
 
-#classifier = MultinomialNB()
-classifier = GaussianNB() 
+
+classifier = MultinomialNB()
+#classifier = GaussianNB() 
 classifier.fit(X_train, y_train_task1)
 
 y_pred = classifier.predict(X_test)
