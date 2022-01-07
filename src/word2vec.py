@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 import gensim
 from gensim.models import Word2Vec
-
 import re
 import nltk
 from nltk.corpus import stopwords
@@ -18,7 +17,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import PCA
+
 #from sklearn.naive_bayes import MultinomialNB
 #from sklearn.naive_bayes import GaussianNB
 
@@ -36,7 +35,7 @@ ps = PorterStemmer()
 all_stopwords = stopwords.words('english')
 all_stopwords.remove('not')
 
-corpus =[]
+'''corpus =[]
 from tqdm import tqdm 
 for i in tqdm(range(0,10468)):
     
@@ -45,15 +44,31 @@ for i in tqdm(range(0,10468)):
     review = review.split()
     review = [ps.stem(word) for word in review if not word in set (all_stopwords)]
     review =' '.join(review)
-    corpus.append(review)
+    corpus.append(review)'''
+   
+# analysis
+post_text = (df.text.apply(gensim.utils.simple_preprocess))
+
+model = gensim.models.Word2Vec(window = 10, min_count =3, workers=4)
+model.build_vocab(post_text, progress_per = 500)
+model.train(post_text, total_examples = model.corpus_count, epochs = model.epochs)
+print(model.wv.similarity(w1="king", w2 = "queen"))
+
+post_text = [] 
+from tqdm import tqdm 
+for i in tqdm(range(0,10468)):
     
-    # TF- IDF CV
+    review = re.sub('[^a-zA-Z]',' ', df['text'][i])
+    review = review.lower()
+    review = review.split()
+    review =' '.join(review)
+    post_text.append(review)
+
+# TF- IDF CV
 # 
-#cv = CountVectorizer( max_features = 150)
+#cv = CountVectorizer( max_features = 1000)
 cv = TfidfVectorizer(min_df=1,stop_words='english')
-X = cv.fit_transform(corpus).toarray()
-pca = PCA(n_components = 500)
-pca.fit(X)
+X = cv.fit_transform(post_text).toarray()
 y = df.iloc[:,-1].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state= 0)
@@ -62,17 +77,18 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 y_train_task1 = [ 0 if (y == 1 or y == 0) else 1 for y in y_train ]
 y_test_task1 = [ 0 if (y == 1 or y == 0) else 1 for y in y_test ]
 
-from sklearn import svm
-from sklearn.svm import SVC
-model = SVC(class_weight ='balanced')
+#logmodel = LogisticRegression(max_iter=1000)
+logmodel = LogisticRegression(max_iter=1000, class_weight='balanced')
+logmodel.fit(X_train, y_train_task1)
+predictions = logmodel.predict(X_test)
 
-model.fit(X_train, y_train_task1)
-print("model trained")
-predictions = model.predict(X_test)
-predictions
+accuracy = confusion_matrix(y_test_task1, predictions)
+print(accuracy)
 
-accuracy =confusion_matrix(y_test_task1, predictions)
-print(f"cm {accuracy}")
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(y_test_task1,predictions)
+accuracy
 
 from sklearn.metrics import classification_report
 print(classification_report(y_test_task1, predictions))
+
