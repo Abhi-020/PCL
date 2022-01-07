@@ -23,7 +23,16 @@ Notification to authors: March 31, 2022
 |Logistic|CV Feature|.87|.89|.88|89|CM matrix 0,0 value very in comparison to other three value|
 |Logistic|TFIDF Feature|.87|.90|.86|90|Confusion matrix unevenly distributed|
 |Logistic|CV Feature,weighted|.87|.80|.83|.80|cm well distributed|
-|Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed|
+|Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed
+|Logistic|TFIDF, Weighted(W2V)|.89|.88|.88|.88| Cm Well distributed|
+|Logistic|CV, Weighted(W2V)|.88|.79|.83|.79| Cm Well distributed|
+|SVM|CV,Weighted|.88|.84|.85|84|contribution from both classes|
+|SVM|TFIDF|
+
+
+
+
+
 # Todo
 
 - [ ] Implement Baseline
