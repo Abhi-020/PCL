@@ -16,13 +16,14 @@ Notification to authors: March 31, 2022
 
 |Models|Description|Precion|Recall|weighted average F1|Accuracy F1|Remark|
 |---|---|---|---|---|---|---|
-|MultinomialNB|TFIDF Feature|.67|.82|.73|81.6|Highly biased|
 |GaussianNB|TFIDF Feature|.70|.69|.69|68.7|partial towards class 0|
 |GaussianNB|CV Feature|.75|.21|.30|21.4||
+|MultinomialNB|TFIDF Feature|.67|.82|.73|81.6|Highly biased|
 |MultinomialNB|CV Feature|.74|.76|.75|76.2|1. overall accc,pre,re is stable throughout.2.class 2 doesn,t given any weightage|
 |Logistic|CV Feature|.87|.89|.88|89|CM matrix 0,0 value very in comparison to other three value|
 |Logistic|TFIDF Feature|.87|.90|.86|90|Confusion matrix unevenly distributed|
 |Logistic|CV Feature,weighted|.87|.80|.83|.80|cm well distributed|
+<<<<<<< HEAD
 |Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed
 |Logistic|TFIDF, Weighted(W2V)|.89|.88|.88|.88| Cm Well distributed|
 |Logistic|CV, Weighted(W2V)|.88|.79|.83|.79| Cm Well distributed|
@@ -32,15 +33,22 @@ Notification to authors: March 31, 2022
 
 
 
+=======
+|Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed|
+|Logistic|word2vec, weighted||||||
+|MLP|||||||
+|SGD Classifier|||||||
+|XGBoost |||||||
+>>>>>>> 664c389354a887798cf2eab5c8ddeeae27998bdd
 
 # Todo
 
 - [ ] Implement Baseline
 
-|MODELS|F1|
+|MODELS|Ready|
 |---|---|
-|Logistic Regression ||
-|Naive Bayes||
+|Logistic Regression |x|
+|Naive Bayes|x|
 |SVM ||
 |MLP||
 |SGD Classifier||
