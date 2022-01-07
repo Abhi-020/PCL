@@ -28,18 +28,12 @@ Notification to authors: March 31, 2022
 |Logistic|TFIDF, Weighted(W2V)|.89|.88|.88|.88| Cm Well distributed|
 |Logistic|CV, Weighted(W2V)|.88|.79|.83|.79| Cm Well distributed|
 |SVM|CV,Weighted|.88|.84|.85|84|contribution from both classes|
-|SVM|TFIDF|
-
-
-
-
-=======
 |Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed|
-|Logistic|word2vec, weighted||||||
 |MLP|||||||
 |SGD Classifier|||||||
 |XGBoost |||||||
->>>>>>> 664c389354a887798cf2eab5c8ddeeae27998bdd
+
+
 
 # Todo
 
