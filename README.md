@@ -23,13 +23,14 @@ Notification to authors: March 31, 2022
 |Logistic|CV Feature|.87|.89|.88|89|CM matrix 0,0 value very in comparison to other three value|
 |Logistic|TFIDF Feature|.87|.90|.86|90|Confusion matrix unevenly distributed|
 |Logistic|CV Feature,weighted|.87|.80|.83|.80|cm well distributed|
-<<<<<<< HEAD
 |Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed
 |Logistic|TFIDF, Weighted(W2V)|.89|.88|.88|.88| Cm Well distributed|
 |Logistic|CV, Weighted(W2V)|.88|.79|.83|.79| Cm Well distributed|
 |SVM|CV,Weighted|.88|.84|.85|84|contribution from both classes|
-|Logistic|TFIDF, Weighted|.89|.87|.88|87| Cm Well distributed|
-|MLP|||||||
+|SVM|CV,W2V|.87|.83|.85|83| CM well distributed|
+|MLP|CV,W2V|.87|.89|.87|89|
+|MLP|TFIDF,W2V|.88|.90|.88|90|
+|SGD|CV,W2V|.86|.88|.87|88|
 |SGD Classifier|||||||
 |XGBoost |||||||
 
@@ -43,9 +44,9 @@ Notification to authors: March 31, 2022
 |---|---|
 |Logistic Regression |x|
 |Naive Bayes|x|
-|SVM ||
-|MLP||
-|SGD Classifier||
+|SVM |x|
+|MLP|x|
+|SGD Classifier|x|
 |XGBoost ||
 |Vanilla RNN ||
 |Bi-LSTM ||
