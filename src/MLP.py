@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 import gensim
 from gensim.models import Word2Vec
-
 import re
 import nltk
 from nltk.corpus import stopwords
@@ -18,7 +17,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import PCA
+
 #from sklearn.naive_bayes import MultinomialNB
 #from sklearn.naive_bayes import GaussianNB
 
@@ -46,7 +45,8 @@ for i in tqdm(range(0,10468)):
     review = [ps.stem(word) for word in review if not word in set (all_stopwords)]
     review =' '.join(review)
     corpus.append(review)'''
-
+   
+# analysis
 post_text = (df.text.apply(gensim.utils.simple_preprocess))
 
 model = gensim.models.Word2Vec(window = 10, min_count =3, workers=4)
@@ -63,14 +63,12 @@ for i in tqdm(range(0,10468)):
     review = review.split()
     review =' '.join(review)
     post_text.append(review)
-    
-    # TF- IDF CV
+
+# TF- IDF CV
 # 
-#cv = CountVectorizer( max_features = 500)
-cv = TfidfVectorizer(min_df=2,stop_words='english')
+#cv = CountVectorizer( max_features = 1000)
+cv = TfidfVectorizer(min_df=1,stop_words='english')
 X = cv.fit_transform(post_text).toarray()
-pca = PCA(n_components = 500) 
-pca.fit(X)
 y = df.iloc[:,-1].values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state= 0)
@@ -79,18 +77,19 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, rand
 y_train_task1 = [ 0 if (y == 1 or y == 0) else 1 for y in y_train ]
 y_test_task1 = [ 0 if (y == 1 or y == 0) else 1 for y in y_test ]
 
-from sklearn import svm
-from sklearn.svm import SVC
-model = SVC(class_weight ='balanced')
+#logmodel = LogisticRegression(max_iter=1000)
+from sklearn.neural_network import MLPClassifier
+clf = MLPClassifier(hidden_layer_sizes =(30,), max_iter=2000)
+clf.fit(X_train, y_train_task1)
+predictions = clf.predict(X_test)
 
-model.fit(X_train, y_train_task1)
-print("model trained")
-predictions = model.predict(X_test)
-predictions
+print("model fit")
 
-print("SVM_CV_word2Vec_500")
-accuracy =confusion_matrix(y_test_task1, predictions)
-print(f"cm {accuracy}")
+score = clf.score(X_test, y_test_task1)
+print(score)
+
+accuracy = confusion_matrix(y_test_task1, predictions)
+print(accuracy)
 
 from sklearn.metrics import classification_report
 print(classification_report(y_test_task1, predictions))
