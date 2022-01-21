@@ -34,9 +34,17 @@ Notification to authors: March 31, 2022
 |SGD Classifier|||||||
 |XGBoost |||||||
 
-
-
-# Todo
+# current ToDo's
+- [ ] Bert MLP weighted.(1)
+- [ ] Bert Bi-lstm [attention(wt)](5) (with Or without weighted)
+- [ ] Fix dataset Imbalance (Aman)
+- [ ] Bert, XLM, GPT, Distill- bert, roberta(hugging Face)(2)
+- [ ] Toxic Bert, News Bert (hugging Face)(4)
+- [ ] Task-2 data analysis (3)
+- [ ] Task-2 Model - logistic, MLP, Bi-lstm,  Bert (2)
+- [ ] Adversial training (Aman)
+- [ ] B-LSTM (Aman)
+# To do
 
 - [ ] Implement Baseline
 
@@ -47,8 +55,7 @@ Notification to authors: March 31, 2022
 |SVM |x|
 |MLP|x|
 |SGD Classifier|x|
-|XGBoost ||
-|Vanilla RNN ||
+|XGBoost |x|
 |Bi-LSTM ||
 
 - [ ] Features: countvectorizer, tfidfvectorizer, word2vec (local), gloVe, elmo, BERT
