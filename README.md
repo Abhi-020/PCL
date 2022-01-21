@@ -41,7 +41,7 @@ Notification to authors: March 31, 2022
 - [ ] Bert, XLM, GPT, Distill- bert, roberta(hugging Face)(2)
 - [ ] Toxic Bert, News Bert (hugging Face)(4)
 - [ ] Task-2 data analysis (3)
-- [ ] Task-2 Model - logistic, MLP, Bi-lstm,  Bert (2)
+- [ ] Task-2 Model - logistic, MLP, Bi-lstm,  Bert (2) note input to the model : sentence + span interval (maybe + span again)**
 - [ ] Adversial training (Aman)
 - [ ] B-LSTM (Aman)
 # To do
