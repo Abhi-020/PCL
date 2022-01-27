@@ -225,3 +225,13 @@ for epoch in range(EPOCHS):
 
 acc, y_true, y_pred = valid(model, testloader)
 
+from sklearn.metrics import confusion_matrix, accuracy_score
+cm = confusion_matrix(y_true, y_pred)
+print(cm)
+
+
+print(accuracy_score(y_true, classes_x))
+
+
+from sklearn.metrics import classification_report
+print(classification_report(y_true, classes_x))
