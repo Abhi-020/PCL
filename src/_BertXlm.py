@@ -54,6 +54,9 @@ def main(args):
 
     device = 'cuda' if cuda.is_available() else 'cpu'
 
+    early_stopping = EarlyStopping(patience=5, verbose=True)
+
+
     class PclData(Dataset):
         def __init__(self, dataframe, tokenizer, max_len):
             self.len = len(dataframe)
@@ -188,7 +191,11 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        valid(model, valloader)
+        _,_,_,vloss = valid(model, valloader)
+        early_stopping(vloss, model)
+        if early_stopping.early_stop:
+            print("Early Stopping!")
+            return
         return
 
     # Validation
@@ -224,12 +231,12 @@ def main(args):
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Validation Loss Epoch: {epoch_loss}, Validation Accuracy Epoch: {epoch_acc}')
         
-        return epoch_acc, y_true, y_pred
+        return epoch_acc, y_true, y_pred, epoch_loss
 
     for epoch in range(EPOCHS):
         train(epoch)
 
-    acc, y_true, y_pred = valid(model, testloader)
+    acc, y_true, y_pred, _ = valid(model, testloader)
 
 
     from sklearn.metrics import confusion_matrix

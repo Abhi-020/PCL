@@ -146,6 +146,9 @@ def main(args):
         n_correct = (big_idx==targets).sum().item()
         return n_correct
 
+    
+    early_stopping = EarlyStopping(patience=5, verbose=True)
+
     #writer = SummaryWriter('runs/textclassify_experiment_1')
 
     def train(epoch):
@@ -186,7 +189,11 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        valid(model, valloader)
+        _,_,_,vloss = valid(model, valloader)
+        early_stopping(vloss, model)
+        if early_stopping.early_stop:
+            print("Early Stopping!")
+            return
         return
 
     # Validation
@@ -222,12 +229,12 @@ def main(args):
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Validation Loss Epoch: {epoch_loss}, Validation Accuracy Epoch: {epoch_acc}')
         
-        return epoch_acc, y_true, y_pred
+        return epoch_acc, y_true, y_pred, epoch_loss
 
     for epoch in range(EPOCHS):
         train(epoch)
 
-    acc, y_true, y_pred = valid(model, testloader)
+    acc, y_true, y_pred, _  = valid(model, testloader)
 
 
     from sklearn.metrics import confusion_matrix
