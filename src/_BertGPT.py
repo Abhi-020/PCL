@@ -60,8 +60,9 @@ def main(args):
     VALID_BS = args.bs
     EPOCHS = args.epochs
     LR =  1e-05
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
-    
+    #tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')#, pad_token=None)
+    tokenizer.pad_token = tokenizer.eos_token
 
     device = 'cuda' if cuda.is_available() else 'cpu'
 
@@ -128,8 +129,8 @@ def main(args):
     class GptModelClass (torch.nn.Module):
         def __init__(self, nclasses):
             super(GptModelClass, self).__init__()
-            self.l1 = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
-            self.pre_classifier = torch.nn.Linear(30522, 768)
+            self.l1 = GPT2Model.from_pretrained('gpt2')
+            self.pre_classifier = torch.nn.Linear(768, 768)
             self.dropout = torch.nn.Dropout(0.3)
             self.classifier = torch.nn.Linear(768, nclasses)
 
@@ -138,7 +139,6 @@ def main(args):
                 output_1 = self.l1(input_ids=input_ids, attention_mask=attention_mask)
             hidden_state = output_1[0]
             pooler = hidden_state[:, 0]
-            #print(pooler.shape)
             pooler = self.pre_classifier(pooler)
             pooler = torch.nn.ReLU()(pooler)
             pooler = self.dropout(pooler)
@@ -251,7 +251,7 @@ def main(args):
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_gpt_small_test_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
@@ -275,4 +275,4 @@ if __name__ == '__main__':
 
     main(args)
 
-    
+    self.l1 = DistilBertModel.from_pretrained("distilbert-base-uncased")

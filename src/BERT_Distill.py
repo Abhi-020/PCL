@@ -60,7 +60,7 @@ def main(args):
     VALID_BS = args.bs
     EPOCHS = args.epochs
     LR =  1e-05
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+    tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased')
     
 
     device = 'cuda' if cuda.is_available() else 'cpu'
@@ -128,7 +128,7 @@ def main(args):
     class GptModelClass (torch.nn.Module):
         def __init__(self, nclasses):
             super(GptModelClass, self).__init__()
-            self.l1 = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
+            self.l1 = AutoModelForMaskedLM.from_pretrained("distilbert-base-uncased")
             self.pre_classifier = torch.nn.Linear(30522, 768)
             self.dropout = torch.nn.Dropout(0.3)
             self.classifier = torch.nn.Linear(768, nclasses)
@@ -251,7 +251,7 @@ def main(args):
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_distill_test_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
