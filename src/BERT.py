@@ -16,41 +16,31 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 
+from utils import EarlyStopping
+
+
 def main(args):
 
     df = pd.read_csv( args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
-    df
 
     df_test_= pd.read_csv( args.datafolder + 'pcl_test.tsv', sep = '\t', names=['seq','id','info','country', 'text','label_'] )
-    df_test_
 
     df_test= df_test_[['text','label_']]
-    df_test
-
     df_test['label_'] = 1
-    df_test
-
-
-    df = pd.read_csv(args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
 
     df = df.dropna(inplace = False)
 
     df = df.reset_index(drop = True)
-    df.info()
+
 
     df_final = df[['text','label']]
-    #df_data = data.dropna(subset=['id','info','country'])
-    df_final                  
+    #df_data = data.dropna(subset=['id','info','country'])                 
 
-    df_final.shape
     #df_final.columns
     df_final['label_']= [ 0 if (y == 1 or y == 0) else 1 for y in df_final['label']]
-    df_final
     df_final.drop('label', axis = 1, inplace= True)
-    print(df_final)
 
     nclasses = len(list(df_final.label_.unique()))
-    nclasses
 
     my_classes = {c:i for i, c in enumerate(list(df_final.label_.unique()))}
     df_final['label_'] = [my_classes[l] for l in df_final.label_]
@@ -62,8 +52,11 @@ def main(args):
     LR =  1e-05
     tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
     
-
+    print('bert-base-uncased is running.......')
     device = 'cuda' if cuda.is_available() else 'cpu'
+
+    early_stopping = EarlyStopping(patience=5, verbose=True)
+
 
     class PclData(Dataset):
         def __init__(self, dataframe, tokenizer, max_len):
@@ -125,9 +118,9 @@ def main(args):
     valloader = DataLoader(val_set, **val_params)
     testloader = DataLoader(test_set, **val_params)
 
-    class GptModelClass (torch.nn.Module):
+    class BertModelClass (torch.nn.Module):
         def __init__(self, nclasses):
-            super(GptModelClass, self).__init__()
+            super(BertModelClass, self).__init__()
             self.l1 = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
             self.pre_classifier = torch.nn.Linear(30522, 768)
             self.dropout = torch.nn.Dropout(0.3)
@@ -145,13 +138,13 @@ def main(args):
             output = self.classifier(pooler)
             return output
 
-    model = GptModelClass(nclasses)
+    model = BertModelClass(nclasses)
     model.to(device)
 
     wt_array =len(df_final['text'])/(len(set(df_final['label_']))*(np.bincount(df_final['label_'])))
     wt_array
 
-    class_weights=torch.FloatTensor(wt_array).cuda()
+    class_weights=torch.FloatTensor(wt_array).to(device=device)
 
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
     optimizer = torch.optim.Adam(params =model.parameters(), lr=LR)
@@ -186,7 +179,7 @@ def main(args):
                 
                 loss_step = tr_loss/nb_tr_steps
                 acc_step = (n_correct*100)/nb_tr_examples
-                print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
+                #print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
                 #writer.add_scalar('training_loss', loss_step, epoch*len(trainloader) +_)
                 
                 
@@ -198,8 +191,12 @@ def main(args):
        # print(f'Total Accuracy Epoch {epoch}: {(n_correct*100)/nb_tr_examples}')
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
-        print(f'Training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        valid(model, valloader)
+        print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
+        _,_,_,vloss = valid(model, valloader)
+        early_stopping(vloss, model)
+        if early_stopping.early_stop:
+            print("Early Stopping!")
+            return
         return
 
     # Validation
@@ -235,12 +232,12 @@ def main(args):
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Validation Loss Epoch: {epoch_loss}, Validation Accuracy Epoch: {epoch_acc}')
         
-        return epoch_acc, y_true, y_pred
+        return epoch_acc, y_true, y_pred, epoch_loss
 
     for epoch in range(EPOCHS):
         train(epoch)
 
-    acc, y_true, y_pred = valid(model, testloader)
+    acc, y_true, y_pred,_ = valid(model, testloader)
 
 
     from sklearn.metrics import confusion_matrix
@@ -255,6 +252,8 @@ def main(args):
     for i in y_pred:
       print(i, file = f )
     f.close()
+    print('file saved!!!!')
+
 
 if __name__ == '__main__':
 
