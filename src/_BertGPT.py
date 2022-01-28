@@ -19,38 +19,25 @@ from torch.utils.tensorboard import SummaryWriter
 def main(args):
 
     df = pd.read_csv( args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
-    df
 
     df_test_= pd.read_csv( args.datafolder + 'pcl_test.tsv', sep = '\t', names=['seq','id','info','country', 'text','label_'] )
-    df_test_
 
     df_test= df_test_[['text','label_']]
-    df_test
-
     df_test['label_'] = 1
-    df_test
-
-
-    df = pd.read_csv(args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
 
     df = df.dropna(inplace = False)
 
     df = df.reset_index(drop = True)
-    df.info()
+
 
     df_final = df[['text','label']]
-    #df_data = data.dropna(subset=['id','info','country'])
-    df_final                  
+    #df_data = data.dropna(subset=['id','info','country'])                 
 
-    df_final.shape
     #df_final.columns
     df_final['label_']= [ 0 if (y == 1 or y == 0) else 1 for y in df_final['label']]
-    df_final
     df_final.drop('label', axis = 1, inplace= True)
-    print(df_final)
 
     nclasses = len(list(df_final.label_.unique()))
-    nclasses
 
     my_classes = {c:i for i, c in enumerate(list(df_final.label_.unique()))}
     df_final['label_'] = [my_classes[l] for l in df_final.label_]
@@ -63,6 +50,7 @@ def main(args):
     #tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
     tokenizer = GPT2Tokenizer.from_pretrained('gpt2')#, pad_token=None)
     tokenizer.pad_token = tokenizer.eos_token
+    print('gpt2 is running.......')
 
     device = 'cuda' if cuda.is_available() else 'cpu'
 
@@ -151,7 +139,7 @@ def main(args):
     wt_array =len(df_final['text'])/(len(set(df_final['label_']))*(np.bincount(df_final['label_'])))
     wt_array
 
-    class_weights=torch.FloatTensor(wt_array).cuda()
+    class_weights=torch.FloatTensor(wt_array).to(device=device)
 
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
     optimizer = torch.optim.Adam(params =model.parameters(), lr=LR)
@@ -183,10 +171,9 @@ def main(args):
             nb_tr_examples += targets.size(0)
             
             if _ % 50 == 0:
-                
                 loss_step = tr_loss/nb_tr_steps
                 acc_step = (n_correct*100)/nb_tr_examples
-                print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
+                #print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
                 #writer.add_scalar('training_loss', loss_step, epoch*len(trainloader) +_)
                 
                 
@@ -198,7 +185,7 @@ def main(args):
        # print(f'Total Accuracy Epoch {epoch}: {(n_correct*100)/nb_tr_examples}')
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
-        print(f'Training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
+        print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
         valid(model, valloader)
         return
 
@@ -255,6 +242,8 @@ def main(args):
     for i in y_pred:
       print(i, file = f )
     f.close()
+    print('file saved!!!!')
+
 
 if __name__ == '__main__':
 
@@ -275,4 +264,4 @@ if __name__ == '__main__':
 
     main(args)
 
-    self.l1 = DistilBertModel.from_pretrained("distilbert-base-uncased")
+    
