@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 import torch
+import torch.nn as nn
 from torch import cuda
 import transformers
 from torch.utils.data import Dataset, DataLoader
@@ -16,85 +17,47 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
-    
+
 
 from utils import EarlyStopping
-
+from data import PclData, load_task1_data
+#from BI_LSTM import BiLSTM
 
 def main(args):
 
-    df = pd.read_csv( args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
-
-    df_test_= pd.read_csv( args.datafolder + 'pcl_test.tsv', sep = '\t', names=['seq','id','info','country', 'text','label_'] )
-
-    df_test= df_test_[['text','label_']]
-    df_test['label_'] = 1
-
-    df = df.dropna(inplace = False)
-
-    df = df.reset_index(drop = True)
-
-
-    df_final = df[['text','label']]
-    #df_data = data.dropna(subset=['id','info','country'])                 
-
-    #df_final.columns
-    df_final['label_']= [ 0 if (y == 1 or y == 0) else 1 for y in df_final['label']]
-    df_final.drop('label', axis = 1, inplace= True)
+    df_final, df_test = load_task1_data(args)
 
     nclasses = len(list(df_final.label_.unique()))
-
     my_classes = {c:i for i, c in enumerate(list(df_final.label_.unique()))}
-    df_final['label_'] = [my_classes[l] for l in df_final.label_]
 
     MAX_LEN= 512
     TRAIN_BS = args.bs
     VALID_BS = args.bs
     EPOCHS = args.epochs
     LR =  1e-05
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
-    
-    print('bert-base-uncased is running.......')
+
+    if args.lm != 'gpt2':
+        tokenizer = AutoTokenizer.from_pretrained(args.lm)
+        lmodel = AutoModelForMaskedLM.from_pretrained(args.lm)
+    else:
+        tokenizer = GPT2Tokenizer.from_pretrained(args.lm)
+        lmodel = GPT2Model.from_pretrained(args.lm)
+
+
+    hdimdict = {'xlm-roberta-base': 250002,
+    'distilbert-base-uncased': 30522,
+    'gpt2': 768, 'bert-base-uncased': 30522,
+    'roberta-large': 768,
+    }
+
+
+    print(f'{args.lm} is running.......')
+
     device = 'cuda' if cuda.is_available() else 'cpu'
 
-    early_stopping = EarlyStopping(patience=5, verbose=True)
 
-
-    class PclData(Dataset):
-        def __init__(self, dataframe, tokenizer, max_len):
-            self.len = len(dataframe)
-            self.data = dataframe
-            self.tokenizer = tokenizer
-            self.max_len = max_len
-            print(self.len); print(self.data)
-            
-        def __getitem__(self, index):# function compulsory
-            sent = self.data.text[index]
-           # sent = " ".join(sent.split())
-            inputs = self.tokenizer.encode_plus(
-            sent, 
-            None,
-            add_special_tokens = True,
-            max_length=self.max_len,
-            #pad_token = '<PAD>',
-            padding = 'max_length',
-            return_token_type_ids = True,
-            truncation=True
-            )
-            
-            ids = inputs['input_ids']
-            mask = inputs['attention_mask']
-            #print('debuggin=',ids)
-            return { 'ids': torch.tensor(ids, dtype=torch.long),
-                   'mask': torch.tensor(mask, dtype=torch.long),
-                    'targets': torch.tensor(self.data.label_[index], dtype=torch.long)
-                    
-                   }
-        
-        def __len__(self):
-            return self.len
 
     train_size = 0.8
     train_dataset = df_final.sample(frac= train_size, random_state=42)
@@ -105,7 +68,8 @@ def main(args):
 
     print("FULL Dataset: {}".format(df_final.shape))
     print("TRAIN Dataset: {}".format(train_dataset.shape))
-    print("TEST Dataset: {}".format(val_dataset.shape))
+    print("VAL Dataset: {}".format(val_dataset.shape))
+    print("TEST Dataset: {}".format(test_dataset.shape))
 
     training_set = PclData(train_dataset, tokenizer, MAX_LEN)
     val_set = PclData(val_dataset, tokenizer, MAX_LEN)
@@ -122,28 +86,57 @@ def main(args):
     valloader = DataLoader(val_set, **val_params)
     testloader = DataLoader(test_set, **val_params)
 
-    class BertModelClass (torch.nn.Module):
-        def __init__(self, nclasses):
-            super(BertModelClass, self).__init__()
-            self.l1 = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
-            self.pre_classifier = torch.nn.Linear(30522, 768)
+
+    
+    model_config = {'lmodel': lmodel,
+                    'nclasses': nclasses,
+                    'input_dim':hdimdict[args.lm],
+                    'bs': args.bs, 
+                    'seq_len': MAX_LEN
+                    }
+
+    class BiLSTM(nn.Module):
+        def __init__(self, input_dim=1, hidden_dim=100, output_dim=1, n_layers=1, bidir=True, bs=32):
+            super(BiLSTM, self).__init__()
+            self.hidden_dim = hidden_dim
+            self.n_layers = n_layers
+
+            self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True, bidirectional=bidir)
+            self.d =  2 if bidir else 1
+            
+            self.hidden = (torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim),
+                                torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim))
+            
+        def forward(self, x):
+            out, self.hidden = self.lstm(x, self.hidden)
+            return out
+
+    class BertBilstmModelClass (torch.nn.Module):
+        def __init__(self, lmodel, input_dim,bs, seq_len, nclasses):
+            super(BertBilstmModelClass, self).__init__()
+            self.seq_len = seq_len
+            self.bs = bs
+            self.l1 = lmodel
+            self.pre_classifier = torch.nn.Linear(self.seq_len*2*100, 64)
             self.dropout = torch.nn.Dropout(0.3)
+            self.bilstm = BiLSTM(input_dim=input_dim,bs=bs)
             self.classifier = torch.nn.Linear(768, nclasses)
 
         def forward(self, input_ids, attention_mask):
             with torch.autograd.no_grad():
                 output_1 = self.l1(input_ids=input_ids, attention_mask=attention_mask)
             hidden_state = output_1[0]
-            pooler = hidden_state[:, 0]
-            #print(pooler.shape)
-            pooler = self.pre_classifier(pooler)
+            
+            lstmop = self.bilstm(hidden_state)
+            pooler = self.pre_classifier(lstmop.reshape(self.bs, -1))
             pooler = torch.nn.ReLU()(pooler)
             pooler = self.dropout(pooler)
             output = self.classifier(pooler)
             return output
 
-    model = BertModelClass(nclasses)
+    model = BertBilstmModelClass(**model_config)
     model.to(device)
+    print(model)
 
     wt_array =len(df_final['text'])/(len(set(df_final['label_']))*(np.bincount(df_final['label_'])))
     wt_array
@@ -155,6 +148,9 @@ def main(args):
     def calculate_acc(big_idx, targets):
         n_correct = (big_idx==targets).sum().item()
         return n_correct
+
+
+    early_stopping = EarlyStopping(patience=5, verbose=True)
 
     #writer = SummaryWriter('runs/textclassify_experiment_1')
 
@@ -242,27 +238,27 @@ def main(args):
     for epoch in range(EPOCHS):
         train(epoch)
 
-    acc, y_true, y_pred,_ = valid(model, testloader)
+    acc, y_true, y_pred, _  = valid(model, testloader)
 
 
     
     accuracy = confusion_matrix(y_true, y_pred)
     print(accuracy)
+    
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_test_1.txt', 'w')
+    f =open(args.loglocation + f'{args.lm}_bilstm_test_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
     print('file saved!!!!')
 
-
 if __name__ == '__main__':
 
     import argparse, pathlib
 
-    parser = argparse.ArgumentParser(description="Running gpt...")
+    parser = argparse.ArgumentParser(description="Running bert+bilstm...")
     
     parser.add_argument('--datafolder', default = '~/PCL/Data/', 
                         help='Location to features folder')
@@ -272,6 +268,8 @@ if __name__ == '__main__':
                                                 help='Number of epochs')
     parser.add_argument('--bs', default =32, type=int,
                                                 help='Batch size')
+    parser.add_argument('--lm', default='bert-base-uncased', required=True,
+                        help='Language Model Name')
 
     args = parser.parse_args()
 

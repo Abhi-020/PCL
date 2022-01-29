@@ -16,6 +16,12 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import 
+from sklearn.metrics import classification_report
+
+from utils import EarlyStopping
+
 def main(args):
 
     df = pd.read_csv( args.datafolder + 'dontpatronizeme_pcl.tsv', sep = '\t', names=['id','info','country', 'text','label'] )
@@ -191,7 +197,8 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        _,_,_,vloss = valid(model, valloader)
+        acc, y_true, y_pred,vloss = valid(model, valloader)
+        print(classification_report(y_true, y_pred))
         early_stopping(vloss, model)
         if early_stopping.early_stop:
             print("Early Stopping!")

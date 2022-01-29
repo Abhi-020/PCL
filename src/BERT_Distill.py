@@ -15,6 +15,12 @@ from transformers import GPT2Tokenizer, GPT2Model
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+
+
+from utils import EarlyStopping
 
 def main(args):
 
@@ -146,7 +152,7 @@ def main(args):
         n_correct = (big_idx==targets).sum().item()
         return n_correct
 
-    
+
     early_stopping = EarlyStopping(patience=5, verbose=True)
 
     #writer = SummaryWriter('runs/textclassify_experiment_1')
@@ -189,7 +195,8 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        _,_,_,vloss = valid(model, valloader)
+        acc, y_true, y_pred,vloss = valid(model, valloader)
+        print(classification_report(y_true, y_pred))
         early_stopping(vloss, model)
         if early_stopping.early_stop:
             print("Early Stopping!")
@@ -237,11 +244,10 @@ def main(args):
     acc, y_true, y_pred, _  = valid(model, testloader)
 
 
-    from sklearn.metrics import confusion_matrix
-    from sklearn.metrics import accuracy_score
+    
     accuracy = confusion_matrix(y_true, y_pred)
     print(accuracy)
-    from sklearn.metrics import classification_report
+    
     print(classification_report(y_true, y_pred))
 
     

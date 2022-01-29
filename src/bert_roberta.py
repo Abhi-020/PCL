@@ -16,12 +16,11 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
-    
+
 
 from utils import EarlyStopping
-
 
 def main(args):
 
@@ -54,13 +53,10 @@ def main(args):
     VALID_BS = args.bs
     EPOCHS = args.epochs
     LR =  1e-05
-    tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
-    
-    print('bert-base-uncased is running.......')
+    tokenizer = AutoTokenizer.from_pretrained('roberta-large')
+    print('roberta-large is running.......')
+
     device = 'cuda' if cuda.is_available() else 'cpu'
-
-    early_stopping = EarlyStopping(patience=5, verbose=True)
-
 
     class PclData(Dataset):
         def __init__(self, dataframe, tokenizer, max_len):
@@ -122,11 +118,11 @@ def main(args):
     valloader = DataLoader(val_set, **val_params)
     testloader = DataLoader(test_set, **val_params)
 
-    class BertModelClass (torch.nn.Module):
+    class DistillBertModelClass (torch.nn.Module):
         def __init__(self, nclasses):
-            super(BertModelClass, self).__init__()
-            self.l1 = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
-            self.pre_classifier = torch.nn.Linear(30522, 768)
+            super(DistillBertModelClass, self).__init__()
+            self.l1 = AutoModelForMaskedLM.from_pretrained("roberta-large")
+            self.pre_classifier = torch.nn.Linear(768, 768)
             self.dropout = torch.nn.Dropout(0.3)
             self.classifier = torch.nn.Linear(768, nclasses)
 
@@ -142,7 +138,7 @@ def main(args):
             output = self.classifier(pooler)
             return output
 
-    model = BertModelClass(nclasses)
+    model = DistillBertModelClass(nclasses)
     model.to(device)
 
     wt_array =len(df_final['text'])/(len(set(df_final['label_']))*(np.bincount(df_final['label_'])))
@@ -155,6 +151,9 @@ def main(args):
     def calculate_acc(big_idx, targets):
         n_correct = (big_idx==targets).sum().item()
         return n_correct
+
+
+    early_stopping = EarlyStopping(patience=5, verbose=True)
 
     #writer = SummaryWriter('runs/textclassify_experiment_1')
 
@@ -242,21 +241,21 @@ def main(args):
     for epoch in range(EPOCHS):
         train(epoch)
 
-    acc, y_true, y_pred,_ = valid(model, testloader)
+    acc, y_true, y_pred, _  = valid(model, testloader)
 
 
     
     accuracy = confusion_matrix(y_true, y_pred)
     print(accuracy)
+    
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_roberta_test_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
     print('file saved!!!!')
-
 
 if __name__ == '__main__':
 
