@@ -44,12 +44,12 @@ def main(args):
     else:
         tokenizer = GPT2Tokenizer.from_pretrained(args.lm)
         lmodel = GPT2Model.from_pretrained(args.lm)
-
+        tokenizer.pad_token = tokenizer.eos_token
 
     hdimdict = {'xlm-roberta-base': 250002,
     'distilbert-base-uncased': 30522,
     'gpt2': 768, 'bert-base-uncased': 30522,
-    'roberta-large': 768,
+    'roberta-large': 50265,
     }
 
 
@@ -89,54 +89,69 @@ def main(args):
 
     
     model_config = {'lmodel': lmodel,
-                    'nclasses': nclasses,
+                    'output_dim': nclasses,
                     'input_dim':hdimdict[args.lm],
                     'bs': args.bs, 
                     'seq_len': MAX_LEN
                     }
 
-    class BiLSTM(nn.Module):
-        def __init__(self, input_dim=1, hidden_dim=100, output_dim=1, n_layers=1, bidir=True, bs=32):
-            super(BiLSTM, self).__init__()
+    class BiLSTMClass(nn.Module):
+        def __init__(self, seq_len,lmodel, input_dim=1, hidden_dim=100, output_dim=1, n_layers=1, bidir=True, bs=32):
+            super(BiLSTMClass, self).__init__()
             self.hidden_dim = hidden_dim
             self.n_layers = n_layers
-
+            self.l1 = lmodel
+            self.bs = bs
             self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True, bidirectional=bidir)
             self.d =  2 if bidir else 1
-            
-            self.hidden = (torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim),
-                                torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim))
-            
-        def forward(self, x):
-            out, self.hidden = self.lstm(x, self.hidden)
+            #self.hidden = (torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim).to(device),
+             #                   torch.zeros(self.n_layers*self.d,1*bs,self.hidden_dim).to(device))
+            self.relu = nn.ReLU()
+            self.fc1 = nn.Linear(self.hidden_dim*2*seq_len, 768)
+            self.fc2 = nn.Linear(768, output_dim)
+
+        def forward(self, input_ids, attention_mask):
+            with torch.autograd.no_grad():
+                output_1 = self.l1(input_ids=input_ids, attention_mask=attention_mask)
+            x = output_1[0]
+            hidden = (torch.zeros(self.n_layers*self.d,1*x.shape[0],self.hidden_dim).to(device),
+                                torch.zeros(self.n_layers*self.d,1*x.shape[0],self.hidden_dim).to(device))
+
+            out, h1 = self.lstm(x, hidden)
+            out = self.relu(self.fc1(out.reshape(x.shape[0], -1)))
+            out = self.relu(self.fc2(out))
             return out
 
-    class BertBilstmModelClass (torch.nn.Module):
+
+
+    '''class BertBilstmModelClass (torch.nn.Module):
         def __init__(self, lmodel, input_dim,bs, seq_len, nclasses):
             super(BertBilstmModelClass, self).__init__()
             self.seq_len = seq_len
             self.bs = bs
             self.l1 = lmodel
-            self.pre_classifier = torch.nn.Linear(self.seq_len*2*100, 64)
+            self.pre_classifier = torch.nn.Linear(self.seq_len*2*100, 256)
             self.dropout = torch.nn.Dropout(0.3)
             self.bilstm = BiLSTM(input_dim=input_dim,bs=bs)
-            self.classifier = torch.nn.Linear(768, nclasses)
+            self.classifier = torch.nn.Linear(256, nclasses)
 
         def forward(self, input_ids, attention_mask):
             with torch.autograd.no_grad():
                 output_1 = self.l1(input_ids=input_ids, attention_mask=attention_mask)
             hidden_state = output_1[0]
             
-            lstmop = self.bilstm(hidden_state)
+            lstmop = self.bilstm(hidden_state.to(device))
+            #print(lstmop.shape, lstmop.reshape(self.bs, -1).shape)
             pooler = self.pre_classifier(lstmop.reshape(self.bs, -1))
             pooler = torch.nn.ReLU()(pooler)
             pooler = self.dropout(pooler)
+            #print('pooler shape:',pooler.shape)
             output = self.classifier(pooler)
-            return output
+            return output'''
 
-    model = BertBilstmModelClass(**model_config)
+    model = BiLSTMClass(**model_config)
     model.to(device)
-    print(model)
+    #print(model)
 
     wt_array =len(df_final['text'])/(len(set(df_final['label_']))*(np.bincount(df_final['label_'])))
     wt_array
@@ -184,7 +199,7 @@ def main(args):
                 
                 
             optimizer.zero_grad()
-            loss.backward()
+            loss.backward(retain_graph=True)
             
             optimizer.step()
             
