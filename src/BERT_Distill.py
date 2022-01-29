@@ -15,11 +15,14 @@ from transformers import GPT2Tokenizer, GPT2Model
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
+<<<<<<< HEAD
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
 
+=======
+>>>>>>> 746edc8698b9f703943c2edfe8ecf56aa42cfe45
 from utils import EarlyStopping
 
 def main(args):

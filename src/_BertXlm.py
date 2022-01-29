@@ -15,6 +15,7 @@ from transformers import GPT2Tokenizer, GPT2Model
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
+from utils import EarlyStopping
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import 
