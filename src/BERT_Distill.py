@@ -15,14 +15,14 @@ from transformers import GPT2Tokenizer, GPT2Model
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 
-<<<<<<< HEAD
+#<<<<<<< HEAD
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
 
-=======
->>>>>>> 746edc8698b9f703943c2edfe8ecf56aa42cfe45
+#=======
+#>>>>>>> 746edc8698b9f703943c2edfe8ecf56aa42cfe45
 from utils import EarlyStopping
 
 def main(args):
@@ -254,7 +254,7 @@ def main(args):
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_distill_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_distill_test_2.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
