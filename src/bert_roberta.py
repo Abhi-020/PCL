@@ -240,7 +240,7 @@ def main(args):
         early_stopping(vloss, model)
         if early_stopping.early_stop:
             print("Early Stopping!")
-            return
+            break
 
     acc, y_true, y_pred, _  = valid(model, testloader)
 
