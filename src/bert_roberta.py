@@ -122,7 +122,7 @@ def main(args):
         def __init__(self, nclasses):
             super(DistillBertModelClass, self).__init__()
             self.l1 = AutoModelForMaskedLM.from_pretrained("roberta-large")
-            self.pre_classifier = torch.nn.Linear(768, 768)
+            self.pre_classifier = torch.nn.Linear(50265, 768)
             self.dropout = torch.nn.Dropout(0.3)
             self.classifier = torch.nn.Linear(768, nclasses)
 
@@ -251,7 +251,7 @@ def main(args):
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_roberta_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_roberta_test_2.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()

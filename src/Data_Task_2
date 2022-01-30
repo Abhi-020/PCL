@@ -1,0 +1,64 @@
+import time, os
+import numpy as np
+import pandas as pd
+
+import torch
+from torch.utils.data import Dataset, DataLoader
+
+
+class PclData(Dataset):
+    def __init__(self, dataframe, tokenizer, max_len):
+        self.len = len(dataframe)
+        self.data = dataframe
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+        print(self.len); print(self.data)
+        
+    def __getitem__(self, index):# function compulsory
+        sent = self.data.text[index]
+       # sent = " ".join(sent.split())
+        inputs = self.tokenizer.encode_plus(
+        sent, 
+        None,
+        add_special_tokens = True,
+        max_length=self.max_len,
+        #pad_token = '<PAD>',
+        padding = 'max_length',
+        return_token_type_ids = True,
+        truncation=True
+        )
+        
+        ids = inputs['input_ids']
+        mask = inputs['attention_mask']
+        #print('debuggin=',ids)
+        return { 'ids': torch.tensor(ids, dtype=torch.long),
+               'mask': torch.tensor(mask, dtype=torch.long),
+                'targets': torch.tensor(self.data.label_[index], dtype=torch.long)
+                
+               }
+    
+    def __len__(self):
+        return self.len
+
+
+
+def load_task2_data(args):
+
+    df = pd.read_csv( args.datafolder + '../Data/Task_2.tsv', sep = '\t', names=['paragraph_id','article_id','paragraph', 'keyword','country_code','span_start','span_end','span_text','category_label',  'number_of_annotators_agreeing_on_that_label'].iloc[3:,:] )
+
+    df_test_= pd.read_csv( args.datafolder + 'pcl_test.tsv', sep = '\t', names=['seq','id','info','country', 'text','label_'] )
+
+    df_test= df_test_[['text','label_']]
+    df_test['label_'] = 1
+
+    df = df.dropna(inplace = False)
+
+    df = df.reset_index(drop = True)
+    y = pd.read_csv('../NOTEBOOK/task_2_labels.txt', sep = ' ', names=[ 'id','l1','l2','l3','l4','l5','l6','l7']).iloc[0:,1:].to_numpy()
+
+
+    df_final = df[['paragraph']]
+
+    nclasses = 7
+
+    return df_final, df_test,y

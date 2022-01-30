@@ -18,7 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import EarlyStopping
 
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
     
 
@@ -248,7 +248,7 @@ def main(args):
     print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + 'bert_gpt_small_test_1.txt', 'w')
+    f =open(args.loglocation + 'bert_gpt_small_test_2.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
