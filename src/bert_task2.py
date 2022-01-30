@@ -195,7 +195,7 @@ def main(args):
             loss = loss_function(outputs.float(), targets.float())
             tr_loss += loss.item()
             big_val= (torch.sigmoid(outputs.data)>.5).float()
-            #print(big_val, targets)
+            #print(big_val)#, targets)
             t,c = calculate_acc(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
             n_correct += c
             nb_tr_examples += t
@@ -243,14 +243,14 @@ def main(args):
                 loss = loss_function(outputs.float(), targets.float())
                 tr_loss += loss.item()
                 big_val= (torch.sigmoid(outputs.data)>.5).float()
-
+                print(big_val)
                 t,c = calculate_acc(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
                 n_correct += c
                 nb_tr_examples += t
                 
                 y_true.extend(targets.cpu().detach().numpy())
           
-                y_pred.extend(torch.argmax(outputs, dim=1).cpu().detach().numpy())
+                y_pred.extend(big_val.cpu().detach().numpy())
                 nb_tr_steps += 1
                 
                 
@@ -272,13 +272,13 @@ def main(args):
 
 
     
-    #accuracy = accuracy_score(y_true, y_pred)
-    #print(accuracy)
+    accuracy = calculate_acc(y_true, y_pred)
+    print(accuracy)
     
     #print(classification_report(y_true, y_pred))
 
-    
-    f =open(args.loglocation + f'{args.lm}_demo_test_task2_1.txt', 'w')
+    #print(y_pred)
+    f =open(args.loglocation + f'{args.lm}_test_task2_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
