@@ -195,12 +195,7 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        acc, y_true, y_pred,vloss = valid(model, valloader)
-        print(classification_report(y_true, y_pred))
-        early_stopping(vloss, model)
-        if early_stopping.early_stop:
-            print("Early Stopping!")
-            return
+        
         return
 
     # Validation
@@ -240,6 +235,12 @@ def main(args):
 
     for epoch in range(EPOCHS):
         train(epoch)
+        acc, y_true, y_pred,vloss = valid(model, valloader)
+        print(classification_report(y_true, y_pred))
+        early_stopping(vloss, model)
+        if early_stopping.early_stop:
+            print("Early Stopping!")
+            return
 
     acc, y_true, y_pred, _  = valid(model, testloader)
 
