@@ -164,9 +164,15 @@ def main(args):
 
     loss_function = torch.nn.BCEWithLogitsLoss(weight=class_weights)
     optimizer = torch.optim.Adam(params =model.parameters(), lr=LR)
+
     def calculate_acc(big_idx, targets):
-        n_correct = (big_idx==targets).sum().item()
-        return n_correct
+        t, c = 0, 0
+        for i,j in zip(big_idx, targets):
+            x = set(np.where(i == 1)[0])
+            y = set(np.where(j == 1)[0])
+            t += len(x)
+            c += len(x & y)
+        return t,c
 
 
     early_stopping = EarlyStopping(patience=5, verbose=True)
@@ -190,10 +196,11 @@ def main(args):
             tr_loss += loss.item()
             big_val= (torch.sigmoid(outputs.data)>.5).float()
             #print(big_val, targets)
-            n_correct += accuracy_score(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
-            
+            t,c = calculate_acc(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
+            n_correct += c
+            nb_tr_examples += t
             nb_tr_steps += 1
-            nb_tr_examples += targets.size(0)
+            
             
             if _ % 50 == 0:
                 
@@ -236,13 +243,16 @@ def main(args):
                 loss = loss_function(outputs.float(), targets.float())
                 tr_loss += loss.item()
                 big_val= (torch.sigmoid(outputs.data)>.5).float()
-                n_correct += accuracy_score(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
 
+                t,c = calculate_acc(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
+                n_correct += c
+                nb_tr_examples += t
+                
                 y_true.extend(targets.cpu().detach().numpy())
           
                 y_pred.extend(torch.argmax(outputs, dim=1).cpu().detach().numpy())
                 nb_tr_steps += 1
-                nb_tr_examples += targets.size(0)
+                
                 
                 if _ % 100 == 0:
                     loss_step = tr_loss/nb_tr_steps
