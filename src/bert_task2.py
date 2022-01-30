@@ -206,7 +206,7 @@ def main(args):
                 
                 loss_step = tr_loss/nb_tr_steps
                 acc_step = (n_correct*100)/nb_tr_examples
-                print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
+                #print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
                 #writer.add_scalar('training_loss', loss_step, epoch*len(trainloader) +_)
                 
                 
@@ -219,12 +219,6 @@ def main(args):
         epoch_loss = tr_loss/nb_tr_steps
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
-        acc, y_true, y_pred,vloss = valid(model, valloader)
-        #print(classification_report(y_true, y_pred))
-        early_stopping(vloss, model)
-        if early_stopping.early_stop:
-            print("Early Stopping!")
-            return
         return
 
     # Validation
@@ -247,7 +241,7 @@ def main(args):
                 t,c = calculate_acc(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
                 n_correct += c
                 nb_tr_examples += t
-                
+
                 y_true.extend(targets.cpu().detach().numpy())
           
                 y_pred.extend(big_val.cpu().detach().numpy())
@@ -267,6 +261,15 @@ def main(args):
 
     for epoch in range(EPOCHS):
         train(epoch)
+
+        acc, y_true, y_pred,vloss = valid(model, valloader)
+        #print(classification_report(y_true, y_pred))
+        early_stopping(vloss, model)
+        if early_stopping.early_stop:
+            print("Early Stopping!")
+            break
+
+
     print("------Testing---------")
     acc, y_true, y_pred, _  = valid(model, testloader)
 
