@@ -51,7 +51,7 @@ def main(args):
     hdimdict = {'xlm-roberta-base': 250002,
     'distilbert-base-uncased': 30522,
     'gpt2': 768, 'bert-base-uncased': 30522,
-    'roberta-large': 768,
+    'roberta-large': 50265,
     }
 
 
@@ -190,7 +190,7 @@ def main(args):
             tr_loss += loss.item()
             big_val= (torch.sigmoid(outputs.data)>.5).float()
             #print(big_val, targets)
-            n_correct += accuracy_score(big_val, targets)
+            n_correct += accuracy_score(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
             
             nb_tr_steps += 1
             nb_tr_examples += targets.size(0)
@@ -200,7 +200,7 @@ def main(args):
                 loss_step = tr_loss/nb_tr_steps
                 acc_step = (n_correct*100)/nb_tr_examples
                 print(f'Training Loss per 50 steps: {loss_step}, Training Accuracy: {acc_step}')
-                writer.add_scalar('training_loss', loss_step, epoch*len(trainloader) +_)
+                #writer.add_scalar('training_loss', loss_step, epoch*len(trainloader) +_)
                 
                 
             optimizer.zero_grad()
@@ -213,7 +213,7 @@ def main(args):
         epoch_acc = (n_correct*100)/nb_tr_examples
         print(f'Epoch : {epoch}, training Loss Epoch: {epoch_loss}, Training Accuracy Epoch: {epoch_acc}')
         acc, y_true, y_pred,vloss = valid(model, valloader)
-        print(classification_report(y_true, y_pred))
+        #print(classification_report(y_true, y_pred))
         early_stopping(vloss, model)
         if early_stopping.early_stop:
             print("Early Stopping!")
@@ -236,7 +236,7 @@ def main(args):
                 loss = loss_function(outputs.float(), targets.float())
                 tr_loss += loss.item()
                 big_val= (torch.sigmoid(outputs.data)>.5).float()
-                n_correct += accuracy_score(big_val, targets)
+                n_correct += accuracy_score(big_val.detach().cpu().numpy(), targets.detach().cpu().numpy())
 
                 y_true.extend(targets.cpu().detach().numpy())
           
@@ -257,18 +257,18 @@ def main(args):
 
     for epoch in range(EPOCHS):
         train(epoch)
-
+    print("------Testing---------")
     acc, y_true, y_pred, _  = valid(model, testloader)
 
 
     
-    accuracy = confusion_matrix(y_true, y_pred)
-    print(accuracy)
+    #accuracy = accuracy_score(y_true, y_pred)
+    #print(accuracy)
     
-    print(classification_report(y_true, y_pred))
+    #print(classification_report(y_true, y_pred))
 
     
-    f =open(args.loglocation + f'{args.lm}_bilstm_test_1.txt', 'w')
+    f =open(args.loglocation + f'{args.lm}_demo_test_task2_1.txt', 'w')
     for i in y_pred:
       print(i, file = f )
     f.close()
