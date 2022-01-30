@@ -159,7 +159,7 @@ def main(args):
     #print(y[:,1])
     wt_array = len(X_data)/(nclasses*np.bincount(y[:,args.classnum]))
     print(wt_array)
-    return
+    #return
     class_weights=torch.FloatTensor(wt_array).to(device=device)
 
     loss_function = torch.nn.CrossEntropyLoss(weight=class_weights)
@@ -187,7 +187,7 @@ def main(args):
             targets = data['targets'].to(device, dtype=torch.long)
             
             outputs = model(ids, mask)
-            loss = loss_function(outputs.float(), targets.float())
+            loss = loss_function(outputs, targets)
             tr_loss += loss.item()
             big_val, big_idx = torch.max(outputs.data, dim=1)
             n_correct += calculate_acc(big_idx, targets)
@@ -228,7 +228,7 @@ def main(args):
                 targets = data['targets'].to(device, dtype=torch.long)
                 
                 outputs = model(ids, mask)
-                loss = loss_function(outputs.float(), targets.float())
+                loss = loss_function(outputs, targets)
                 tr_loss += loss.item()
                 big_val, big_idx = torch.max(outputs.data, dim=1)
                 n_correct += calculate_acc(big_idx, targets)
@@ -250,7 +250,7 @@ def main(args):
         print(f'Validation Loss Epoch: {epoch_loss}, Validation Accuracy Epoch: {epoch_acc}')
         
         return epoch_acc, y_true, y_pred, epoch_loss
-
+    print(f'----- training for class: {args.classnum}')
     for epoch in range(EPOCHS):
         train(epoch)
 
