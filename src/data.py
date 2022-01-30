@@ -70,3 +70,16 @@ def load_task1_data(args):
 
 
     return df_final, df_test
+
+
+
+
+def load_task2_data(args):
+
+    df = pd.read_csv( args.datafolder + 'Task_2.tsv', sep = '\t', names=['paragraph_id','article_id','paragraph', 'keyword','country_code','span_start','span_end','span_text','category_label',  'number_of_annotators_agreeing_on_that_label'] ).iloc[3:,:]
+
+    y = pd.read_csv(args.datafolder + 'task_2_labels.txt', sep = ' ', names=[ 'id','l1','l2','l3','l4','l5','l6','l7']).iloc[0:,1:].to_numpy()
+
+    df_test = pd.read_csv('../Data/pcl_test.tsv', sep = '\t',names=['id','info','country', 'text'] )
+
+    return df, y, df_test
